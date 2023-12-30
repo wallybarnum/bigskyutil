@@ -76,64 +76,27 @@ func DirRequest(directory string) ([]byte, error ){
 		return nil, err
 	}
 	// json_obj is a byte array
-	fmt.Printf("json_obj: %s\n", json_obj)
+	//fmt.Printf("json_obj: %s\n", json_obj)
     
     bt := append(cmd_hdr, xfer_cmd_opcode...)
     bt = append(cmd_hdr, json_obj...)
 	// make a sysex message, which will prepend F0 and append F7 to byte slice
 	m := midi.SysEx(bt)
-	fmt.Println("sysex msg to send: ", m)
-    return m, err
-}
-
-func ReadFileRequest(file string) ([]byte, error ){
-    /*
-	To read a file you will first send a command with a json payload of:
-    {
-     "cmd" : "read",
-     "path" : "/path/to/file"
-    }
-    
-    followed by data blocks
-    F0 00 01 55 [FID] [PID] 50 01 [SIZE HI] [SIZE LO] F7
-    where SIZE is the number of 8-bit bytes to read
-    
-    e.g. to request 256 bytes
-    F0 00 01 55 18 01 50 01 02 00 F7
-
-	*/
-
-	type Message struct {
-		Cmd  string `json:"cmd"`
-		Path string `json:"path"`
-	}
-
-	data := Message{"read", file}
-	// make a json object
-	json_obj, err := json.Marshal(data)
-	if err != nil {
-		fmt.Printf("ERROR: %s\n", err)
-		return nil, err
-	}
-	// json_obj is a byte array
-	fmt.Printf("json_obj: %s\n", json_obj)
-    
-    bt := append(cmd_hdr, xfer_cmd_opcode...)
-    bt = append(cmd_hdr, json_obj...)
-	// make a sysex message, which will prepend F0 and append F7 to byte slice
-	m := midi.SysEx(bt)
-	fmt.Println("sysex msg to send: ", m)
+	//fmt.Println("sysex msg to send: ", m)
     return m, err
 }
 
 var Sig bool = false
 var Eof bool = false
+var Rxbytes = []byte("") // TODO: use channel instead
+
 
 var EachMessage = func(msg midi.Message, timestampms int32) {
 	if msg.Is(midi.RealTimeMsg) {
 		// ignore realtime messages
 		return
 	}
+
 	var channel, key, velocity, cc, val, prog uint8
 	var bt []byte
 
@@ -157,7 +120,7 @@ var EachMessage = func(msg midi.Message, timestampms int32) {
 	case msg.GetSysEx(&bt):
 		//fmt.Println("RX sysex: % X", bt)
 		//fmt.Println("RX sysex")
-		//dumpByteSlice(bt)
+		//DumpByteSlice(bt)
 		ack, data, err := parseSysex(bt)
 		if err != nil {
 			fmt.Printf("ERROR: %s\n", err)
@@ -165,11 +128,11 @@ var EachMessage = func(msg midi.Message, timestampms int32) {
 		}
 		if ack[0] == xfer_data_ack_opcode[0] {
 			//fmt.Println("ACK")
-			//dumpByteSlice(data)
-			fmt.Println(string(data))
-
+			//DumpByteSlice(data)
+			//fmt.Println(string(data))
+			Rxbytes = append(Rxbytes, data...)
 		} else if ack[0] == xfer_data_nack_opcode[0] {
-			fmt.Println("NACK")
+			//fmt.Println("NACK")
 			Eof = true
 		} else {
 			fmt.Println("not an ack or nack")
@@ -184,7 +147,7 @@ var EachMessage = func(msg midi.Message, timestampms int32) {
 func parseSysex(bt []byte) ([]byte, []byte, error){
 	//fmt.Println("RX sysex: % X", bt)
 	//fmt.Println("RX sysex")
-	//dumpByteSlice(bt)
+	//DumpByteSlice(bt)
 
 	// TODO: check for valid header...
 
@@ -197,7 +160,7 @@ func parseSysex(bt []byte) ([]byte, []byte, error){
 				data = append(data, bt[i])
 			}
 		}
-		//dumpByteSlice(data)
+		//DumpByteSlice(data)
 		return xfer_data_ack_opcode, data, nil
 	}else if bt[6] == xfer_data_nack_opcode[0] {
 		//fmt.Println("NACK")

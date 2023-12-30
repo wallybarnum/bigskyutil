@@ -4,9 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-
-	"gitlab.com/gomidi/midi/v2"
-	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
+	"github.com/wallybarnum/bigskyutil/pkg/bigskyutil"
 )
 
 var discoverCmd = &cobra.Command{
@@ -14,7 +12,9 @@ var discoverCmd = &cobra.Command{
     Aliases: []string{"disco"},
     Short:  "discover midi devices",
     Run: func(cmd *cobra.Command, args []string) {
-		discover()
+		inports, outports := bigskyutil.Discover()
+		fmt.Printf("In Ports:\n%s\n", inports)
+		fmt.Printf("Out Ports:\n%s\n", outports)
     },
 }
 
@@ -22,11 +22,3 @@ func init() {
     rootCmd.AddCommand(discoverCmd)
 }
 
-func discover() {
-	defer midi.CloseDriver()
-	inports := midi.GetInPorts().String()
-	fmt.Printf("In Ports:\n%s\n", inports)
-	outports := midi.GetOutPorts().String()
-	fmt.Printf("Out Ports:\n%s\n", outports)
-
-}

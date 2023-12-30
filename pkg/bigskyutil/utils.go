@@ -4,7 +4,7 @@ import "fmt"
 
 
 
-func dumpByteSlice(b []byte) {
+func DumpByteSlice(b []byte) {
 	var a [16]byte
 	n := (len(b) + 15) &^ 15
 	for i := 0; i < n; i++ {
