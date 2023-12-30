@@ -12,22 +12,24 @@ import (
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 )
 
-var listCmd = &cobra.Command{
-	Use:     "list",
-	Aliases: []string{"ls"},
-	Short:   "list directory contents",
+var readCmd = &cobra.Command{
+	Use:     "read",
+	Aliases: []string{"rd"},
+	Short:   "read file",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		list(args[0])
+		read(args[0])
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(readCmd)
 }
 
+var sig bool = false
+var eof bool = false
 
-func list(directory string) {
+func read(directory string) {
 
 	defer midi.CloseDriver()
 
@@ -57,24 +59,24 @@ func list(directory string) {
 		return
 	}
 	// make a dir request sysex message
-	m, err := bigskyutil.DirRequest(directory)
+	m, err := bigskyutil.ReadFileRequest(directory)
 	if err != nil {
 		fmt.Println("can't build dir request")
 		return
 	}
 
-	err = send(m) // send the dir request sysex message
+	err = send(m) // send the read request sysex message
 	if err != nil {
 		fmt.Println("can't send sysex message err = ", err)
 		return
 	}
 	// wait for a response
-	for eof == false {
-		if sig == false {
-			fmt.Println("waiting for response")
-			time.Sleep(time.Second * 1)
+	for bigskyutil.Eof == false {
+		if bigskyutil.Sig == false {
+			//fmt.Println("waiting for response")
+			time.Sleep(time.Millisecond * 100)
 		} else {
-			sig = false
+			bigskyutil.Sig = false
 			// make a data block request sysex message
 			m, err = bigskyutil.DataBlockRequest(256)
 			err = send(m) // send the datablock sysex message
@@ -87,7 +89,42 @@ func list(directory string) {
 	// stops listening
 	stop()
 }
+/*
+var eachMessage = func(msg midi.Message, timestampms int32) {
+	if msg.Is(midi.RealTimeMsg) {
+		// ignore realtime messages
+		return
+	}
+	var channel, key, velocity, cc, val, prog uint8
+	var bt []byte
 
+	fmt.Println("RX msg")
+	switch {
+
+	// is better, than to use GetNoteOn (handles note on messages with velocity of 0 as expected)
+	case msg.GetNoteStart(&channel, &key, &velocity):
+		fmt.Printf("note started channel: %v key: %v (%s) velocity: %v\n", channel, key, midi.Note(key), velocity)
+
+	// is better, than to use GetNoteOff (handles note on messages with velocity of 0 as expected)
+	case msg.GetNoteEnd(&channel, &key):
+		fmt.Printf("note ended channel: %v key: %v (%s)\n", channel, key, midi.Note(key))
+
+	case msg.GetControlChange(&channel, &cc, &val):
+		fmt.Printf("control change %v (%s) channel: %v value: %v\n", cc, midi.ControlChangeName[cc], channel, val)
+
+	case msg.GetProgramChange(&channel, &prog):
+		fmt.Printf("program change %v (%s) channel: %v\n", prog, gm.Instr(prog), channel)
+
+	case msg.GetSysEx(&bt):
+		//fmt.Println("RX sysex: % X", bt)
+		fmt.Println("RX sysex")
+		sig = true
+
+	default:
+		fmt.Printf("%s\n", msg)
+	}
+}
+*/
 
 // example of preset directory listing
 //{"dir" : [{"fn":"pst0.json","attr" : 0 },{"fn":"pst1.json","attr" : 0 },{"fn":"pst10.json","attr" : 0 },{"fn":"pst100.json","attr" : 0 },{"fn":"pst101.json","attr" : 0 },{"fn":"pst102.json","attr" : 0 },{"fn":"pst103.json","attr" : 0 },{"fn":"pst104.json","attr" : 0 },{"fn":"pst105.json","attr" : 0 },{"fn":"pst106.json","attr" : 0 },{"fn":"pst107.json","attr" : 0 },{"fn":"pst108.json","attr" : 0 },{"fn":"pst109.json","attr" : 0 },{"fn":"pst11.json","attr" : 0 },{"fn":"pst110.json","attr" : 0 },{"fn":"pst111.json","attr" : 0 },{"fn":"pst112.json","attr" : 0 },{"fn":"pst113.json","attr" : 0 },{"fn":"pst114.json","attr" : 0 },{"fn":"pst115.json","attr" : 0 },{"fn":"pst116.json","attr" : 0 },{"fn":"pst117.json","attr" : 0 },{"fn":"pst118.json","attr" : 0 },{"fn":"pst119.json","attr" : 0 },{"fn":"pst12.json","attr" : 0 },{"fn":"pst120.json","attr" : 0 },{"fn":"pst121.json","attr" : 0 },{"fn":"pst122.json","attr" : 0 },{"fn":"pst123.json","attr" : 0 },{"fn":"pst124.json","attr" : 0 } ] }

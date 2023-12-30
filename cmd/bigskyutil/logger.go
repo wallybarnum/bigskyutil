@@ -41,7 +41,6 @@ func log() {
 		case msg.GetSysEx(&bt):
 			//fmt.Printf("RX sysex: % X\n", bt)
 			fmt.Printf("RX sysex:\n")
-			dumpByteSlice(bt)
 		case msg.GetNoteStart(&ch, &key, &vel):
 			fmt.Printf("RX starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
 		case msg.GetNoteEnd(&ch, &key):
