@@ -70,6 +70,7 @@ func ReadFile(directory string) ([]byte, error) {
 	}
 	// stops listening
 	stop()
+	time.Sleep(time.Millisecond * 100)
 	return Rxbytes, nil
 }
 
