@@ -53,6 +53,8 @@ func ReadFile(directory string) ([]byte, error) {
 		return test, err
 		//return nil, err
 	}
+	Eof = false
+	Sig = false
 	err = send(m) // send the read request sysex message
 	if err != nil {
 		log.Println("can't send sysex message err = ", err)
