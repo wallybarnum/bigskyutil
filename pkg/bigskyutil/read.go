@@ -56,7 +56,7 @@ func ReadFile(directory string) ([]byte, error) {
 	for Eof == false {
 		if Sig == false {
 			//log.Println("waiting for response")
-			time.Sleep(time.Millisecond * 100)
+			time.Sleep(time.Millisecond * 200)
 		} else {
 			Sig = false
 			// make a data block request sysex message
