@@ -2,13 +2,13 @@ package bigskyutil
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
 	"gitlab.com/gomidi/midi/v2"
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 )
-var test = []byte("hello world")
 
 func ReadFile(directory string) ([]byte, error) {
 
@@ -17,31 +17,27 @@ func ReadFile(directory string) ([]byte, error) {
 	in, err := midi.FindInPort("BigSkyMX")
 	if err != nil {
 		log.Println("can't find BigSkyMX")
-		return test, err
-		//return nil, err
+		return nil, err
 	}
 	// listens to the in port and calls eachMessage for every message.
 	// any running status bytes are converted and only complete messages are passed to the eachMessage.
 	stop, err := midi.ListenTo(in, EachMessage, midi.UseSysEx())
 	if err != nil {
 		log.Println("can't listen to in port")
-		return test, err
-		//return nil, err
+		return nil, err
 	}
 
 	var out, _ = midi.FindOutPort("BigSkyMX")
 	if err != nil {
 		log.Println("can't find BigSkyMX")
-		return test, err
-		//return nil, err
+		return nil, err
 	}
 
 	// creates a sender function to the out port
 	send, err := midi.SendTo(out)
 	if err != nil {
 		log.Println("can't make send function")
-		return test, err
-		//return nil, err
+		return nil, err
 	}
 
 	Rxbytes = Rxbytes[:0] // reset rx slice - TODO: use channel instead
@@ -50,17 +46,16 @@ func ReadFile(directory string) ([]byte, error) {
 	m, err := ReadFileRequest(directory)
 	if err != nil {
 		log.Println("can't build dir request")
-		return test, err
-		//return nil, err
+		return nil, err
 	}
 	Eof = false
 	Sig = false
 	err = send(m) // send the read request sysex message
 	if err != nil {
 		log.Println("can't send sysex message err = ", err)
-		return test, err
-		//return nil, err
+		return nil, err
 	}
+
 	// wait for a response
 	for Eof == false {
 		if Sig == false {
@@ -73,8 +68,7 @@ func ReadFile(directory string) ([]byte, error) {
 			err = send(m) // send the datablock sysex message
 			if err != nil {
 				log.Println("can't send data block requeste sysex message err = ", err)
-				return test, err
-				//return nil, err
+				return nil, err
 			}
 		}
 	}
@@ -83,29 +77,28 @@ func ReadFile(directory string) ([]byte, error) {
 	time.Sleep(time.Millisecond * 100)
 	if(Rxbytes == nil){
 		log.Println("Rxbytes is nil")
-		test = []byte("Rxbytes is nil")
-		return test, nil
+		return Rxbytes, fmt.Errorf("Rxbytes is nil")
 	}
 	return Rxbytes, nil
 }
 
 
 func ReadFileRequest(file string) ([]byte, error ){
-    /*
-	To read a file you will first send a command with a json payload of:
-    {
-     "cmd" : "read",
-     "path" : "/path/to/file"
-    }
     
-    followed by data blocks
-    F0 00 01 55 [FID] [PID] 50 01 [SIZE HI] [SIZE LO] F7
-    where SIZE is the number of 8-bit bytes to read
-    
-    e.g. to request 256 bytes
-    F0 00 01 55 18 01 50 01 02 00 F7
+	//To read a file you will first send a command with a json payload of:
+    //{
+    // "cmd" : "read",
+    // "path" : "/path/to/file"
+    //}
+    //
+    //followed by data blocks
+    //F0 00 01 55 [FID] [PID] 50 01 [SIZE HI] [SIZE LO] F7
+    //where SIZE is the number of 8-bit bytes to read
+    //
+    //e.g. to request 256 bytes
+    //F0 00 01 55 18 01 50 01 02 00 F7
 
-	*/
+	
 
 	type Message struct {
 		Cmd  string `json:"cmd"`
