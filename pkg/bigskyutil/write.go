@@ -1,6 +1,7 @@
 package bigskyutil
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -16,6 +17,18 @@ func WriteFile(path string, data []byte) error {
 
 	defer midi.CloseDriver()
 
+	// check if JSON is valid
+	valid := json.Valid(data)
+	if valid == false {
+		log.Println("JSON is not valid")
+		return fmt.Errorf("JSON is not valid")
+	}
+	// compact JSON to single line
+	compact := &bytes.Buffer{}
+	json.Compact(compact, data)
+	data = compact.Bytes()
+
+	// do midi port stuff
 	in, err := midi.FindInPort("BigSkyMX")
 	if err != nil {
 		log.Println("can't find BigSkyMX")
@@ -56,6 +69,7 @@ func WriteFile(path string, data []byte) error {
 	Sig = true
 	// send data blocks
 	for i := 0; i < len(data); i += block_size {
+		// wait for acks from MX
 		if Sig == false {
 			log.Println("waiting for response")
 			time.Sleep(time.Millisecond * 200)
@@ -171,8 +185,8 @@ func DataBlockTransfer(data []byte, size int) ([]byte, error) {
 		}
 	}
 	bt = append(bt, escaped_data...)
-	fmt.Println("data transfer msg to send: ")
-	DumpByteSlice(bt)
+	//fmt.Println("data transfer msg to send: ")
+	//DumpByteSlice(bt)
 
 	// make a sysex message, which will prepend F0 and append F7 to byte slice
 	m := midi.SysEx(bt)

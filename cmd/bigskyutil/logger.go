@@ -17,7 +17,7 @@ var loggerCmd = &cobra.Command{
     Short:  "log rx midi",
     Args:  cobra.ExactArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
-		log()
+		logger()
     },
 }
 
@@ -25,7 +25,7 @@ func init() {
     rootCmd.AddCommand(loggerCmd)
 }
 
-func log() {
+func logger() {
 	defer midi.CloseDriver()
 	
 	in, err := midi.FindInPort("BigSkyMX")
@@ -40,7 +40,7 @@ func log() {
 		switch {
 		case msg.GetSysEx(&bt):
 			//fmt.Printf("RX sysex: % X\n", bt)
-			fmt.Printf("RX sysex:\n")
+			//fmt.Printf("RX sysex:\n")
 		case msg.GetNoteStart(&ch, &key, &vel):
 			fmt.Printf("RX starting note %s on channel %v with velocity %v\n", midi.Note(key), ch, vel)
 		case msg.GetNoteEnd(&ch, &key):
