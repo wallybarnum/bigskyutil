@@ -10,7 +10,7 @@ import (
 )
 
 var readCmd = &cobra.Command{
-	Use:     "read <file> <outfile>",
+	Use:     "read <src file> <dst outfile>",
 	Aliases: []string{"rd"},
 	Short:   "read file from BigSkyMX",
 	Args:    cobra.ExactArgs(2),

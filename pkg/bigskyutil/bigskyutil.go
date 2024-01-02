@@ -146,21 +146,31 @@ var EachMessage = func(msg midi.Message, timestampms int32) {
 
 func parseSysex(bt []byte) ([]byte, []byte, error){
 	//fmt.Println("RX sysex: % X", bt)
-	//fmt.Println("RX sysex")
+	fmt.Println("RX sysex")
 	//DumpByteSlice(bt)
 
 	// TODO: check for valid header...
 
 	// check for ack or nack
 	if bt[6] == xfer_data_ack_opcode[0] {
-		//fmt.Println("ACK ", len(bt), " bytes" )
+		fmt.Println("ACK ", len(bt), " bytes" )
 		data := []byte{}
+		// the data is 8 bit bytes, but sent as 7 bit bytes 
+		// by spreading 7 data bytes over 8 transmitted bytes
+		// the first transmitted byte contains the msbs of the following
+		// 7 data bytes.
+		// if the data is all ascii < 128, then their msbs will all be 0
+		// so the data can be converted to 8 bit bytes by dropping
+		// the msbs and setting the first transmitted byte to zero
+		// sending non-ascii data will require a more complicated
+		// TODO: properly convert 7 bit bytes to 8 bit bytes
+
 		for i := 7; i < len(bt); i++ {
-			if (i+1)%8 != 0 { // every 8th byte is 0x00 and not part of the data - why?
+			if (i+1)%8 != 0 { 
 				data = append(data, bt[i])
 			}
 		}
-		//DumpByteSlice(data)
+		DumpByteSlice(data)
 		return xfer_data_ack_opcode, data, nil
 	}else if bt[6] == xfer_data_nack_opcode[0] {
 		//fmt.Println("NACK")

@@ -10,7 +10,7 @@ import (
 	_ "gitlab.com/gomidi/midi/v2/drivers/rtmididrv"
 )
 
-func ReadFile(directory string) ([]byte, error) {
+func ReadFile(path string) ([]byte, error) {
 
 	defer midi.CloseDriver()
 
@@ -42,8 +42,8 @@ func ReadFile(directory string) ([]byte, error) {
 
 	Rxbytes = Rxbytes[:0] // reset rx slice - TODO: use channel instead
 
-	// make a dir request sysex message
-	m, err := ReadFileRequest(directory)
+	// make a read file sysex message
+	m, err := ReadFileRequest(path)
 	if err != nil {
 		log.Println("can't build dir request")
 		return nil, err
